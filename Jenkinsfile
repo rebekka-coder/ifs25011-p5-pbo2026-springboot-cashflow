@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        APP_NAME = 'username-p5-pbo2026-springboot-cashflow'
+        APP_NAME = 'ifs25011-p5-pbo2026-springboot-cashflow'
     }
     stages {
         stage('Build & Test') {
