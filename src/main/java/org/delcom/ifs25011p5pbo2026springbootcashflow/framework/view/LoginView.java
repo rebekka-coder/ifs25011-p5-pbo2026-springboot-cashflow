@@ -1,9 +1,10 @@
 package org.delcom.ifs25011p5pbo2026springbootcashflow.framework.view;
 
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -36,20 +37,20 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
         TextField username = new TextField("Username");
-        username.setId("login-username");
         username.setWidthFull();
         username.setAutofocus(true);
+        setInputId(username, "login-username"); // ID di <input>, bukan di <vaadin-text-field>
 
         PasswordField password = new PasswordField("Password");
-        password.setId("login-password");
         password.setWidthFull();
+        setInputId(password, "login-password"); // ID di <input type="password">
 
         ProgressBar progress = new ProgressBar();
         progress.setIndeterminate(true);
         progress.setVisible(false);
 
         Button loginButton = new Button("Masuk");
-        loginButton.setId("login-submit");
+        loginButton.setId("login-submit"); // tombol sudah benar: ID di <vaadin-button>
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.setWidthFull();
         loginButton.addClickShortcut(Key.ENTER);
@@ -73,6 +74,27 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
                 new RouterLink("Belum punya akun? Daftar", RegisterView.class));
         card.addClassName("auth-card");
         add(card);
+    }
+
+    /**
+     * Memasang ID pada elemen <input> di dalam field Vaadin (bukan pada pembungkusnya),
+     * lalu mengarahkan atribut "for" pada <label> ke ID tersebut.
+     */
+    private static void setInputId(Component field, String id) {
+        field.addAttachListener(e -> field.getElement().executeJs(
+                """
+                let tries = 0;
+                const apply = () => {
+                    const input = this.inputElement || this.querySelector('input');
+                    if (!input) return false;
+                    input.id = $0;
+                    const label = this.querySelector('label');
+                    if (label) label.setAttribute('for', $0);
+                    return true;
+                };
+                const tick = () => { if (!apply() && tries++ < 20) setTimeout(tick, 50); };
+                tick();
+                """, id));
     }
 
     @Override
