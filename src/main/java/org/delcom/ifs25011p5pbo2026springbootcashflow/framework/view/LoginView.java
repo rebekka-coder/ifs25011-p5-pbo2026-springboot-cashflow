@@ -14,6 +14,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
@@ -39,18 +40,18 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         TextField username = new TextField("Username");
         username.setWidthFull();
         username.setAutofocus(true);
-        setInputId(username, "login-username"); // ID di <input>, bukan di <vaadin-text-field>
+        setInputId(username, "login-username", "text");
 
         PasswordField password = new PasswordField("Password");
         password.setWidthFull();
-        setInputId(password, "login-password"); // ID di <input type="password">
+        setInputId(password, "login-password", "password");
 
         ProgressBar progress = new ProgressBar();
         progress.setIndeterminate(true);
         progress.setVisible(false);
 
         Button loginButton = new Button("Masuk");
-        loginButton.setId("login-submit"); // tombol sudah benar: ID di <vaadin-button>
+        loginButton.setId("login-submit");
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.setWidthFull();
         loginButton.addClickShortcut(Key.ENTER);
@@ -77,11 +78,20 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
     }
 
     /**
-     * Memasang ID pada elemen <input> di dalam field Vaadin (bukan pada pembungkusnya),
-     * lalu mengarahkan atribut "for" pada <label> ke ID tersebut.
-     * Memakai MutationObserver: ID dipasang begitu <input> muncul di DOM, tanpa menebak jeda waktu.
+     * Memasang ID pada <input> di dalam field Vaadin (bukan pada pembungkusnya).
+     * 1) Utama: <input slot="input" id="..."> disediakan dari server, jadi ID sudah ada sejak render pertama.
+     * 2) Cadangan: JavaScript memastikan ID + atribut "for" pada label, kalau input dibuat ulang oleh komponen.
      */
-    private static void setInputId(Component field, String id) {
+    private static void setInputId(Component field, String id, String type) {
+        Element input = new Element("input");
+        input.setAttribute("slot", "input");
+        input.setAttribute("id", id);
+        input.setAttribute("type", type);
+        if ("password".equals(type)) {
+            input.setAttribute("autocapitalize", "off");
+        }
+        field.getElement().appendChild(input);
+
         field.addAttachListener(e -> field.getElement().executeJs(
                 """
                 const host = this;
