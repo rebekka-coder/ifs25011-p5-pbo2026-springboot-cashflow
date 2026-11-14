@@ -54,6 +54,20 @@ public final class AuthSession {
         writeCookie(createCookie(user.getId()));
     }
 
+    /** Membaca user id dari cookie bertanda tangan pada request servlet biasa (untuk filter). */
+    public static Integer userIdFromRequest(jakarta.servlet.http.HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+        return null;
+        }
+        for (Cookie cookie : cookies) {
+        if (COOKIE_NAME.equals(cookie.getName())) {
+            return verify(cookie.getValue());
+        }
+    }
+        return null;
+    }
+
     public static Optional<User> currentUser(IUserRepository users) {
         VaadinSession vaadin = VaadinSession.getCurrent();
         if (vaadin == null) {
