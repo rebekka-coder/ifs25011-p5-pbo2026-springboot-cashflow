@@ -3,6 +3,7 @@ package org.delcom.ifs25011p5pbo2026springbootcashflow.framework.view;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -16,7 +17,6 @@ import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouterLink;
 import org.delcom.ifs25011p5pbo2026springbootcashflow.domain.exception.ValidationException;
 import org.delcom.ifs25011p5pbo2026springbootcashflow.domain.repository.IUserRepository;
 import org.delcom.ifs25011p5pbo2026springbootcashflow.framework.auth.AuthSession;
@@ -58,7 +58,8 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
                 }
                 auth.register(username.getValue(), password.getValue(), fullName.getValue());
                 Notification.show("Registrasi berhasil, silakan masuk", 3500, Notification.Position.BOTTOM_START);
-                UI.getCurrent().navigate(LoginView.class);
+                // /login adalah halaman HTML biasa (LoginPageFilter): muat ulang penuh
+                UI.getCurrent().getPage().setLocation("/login");
             } catch (ValidationException ex) {
                 Notification n = Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
                 n.addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -68,8 +69,12 @@ public class RegisterView extends VerticalLayout implements BeforeEnterObserver 
             }
         });
 
+        // Anchor biasa (bukan RouterLink) karena /login bukan rute Vaadin
+        Anchor loginLink = new Anchor("/login", "Sudah punya akun? Masuk");
+        loginLink.getElement().setAttribute("router-ignore", true);
+
         Div card = new Div(new H2("Daftar Akun Cashflow"), fullName, username, password, confirm, progress,
-                register, new RouterLink("Sudah punya akun? Masuk", LoginView.class));
+                register, loginLink);
         card.addClassName("auth-card");
         add(card);
     }

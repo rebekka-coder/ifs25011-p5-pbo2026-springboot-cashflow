@@ -34,14 +34,16 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     public void beforeEnter(BeforeEnterEvent event) {
         Optional<User> user = AuthSession.currentUser(users);
         if (user.isEmpty()) {
-            event.forwardTo(LoginView.class);
+            // /login adalah halaman HTML biasa (LoginPageFilter), bukan rute Vaadin: muat ulang penuh
+            event.getUI().getPage().setLocation("/login");
             return;
         }
+        int currentId = user.get().getId();
         if (builtForUserId == null) {
             build(user.get());
-            builtForUserId = user.get().getId();
-        } else if (builtForUserId != user.get().getId()) {
-            UI.getCurrent().getPage().reload();
+            builtForUserId = currentId;
+        } else if (builtForUserId.intValue() != currentId) {
+            event.getUI().getPage().reload();
         }
     }
 

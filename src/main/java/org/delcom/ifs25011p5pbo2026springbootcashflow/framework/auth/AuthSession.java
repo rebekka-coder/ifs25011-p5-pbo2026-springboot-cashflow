@@ -20,6 +20,8 @@ import java.util.UUID;
 /**
  * Sesi login: user id disimpan di VaadinSession + HTTP session + cookie bertanda tangan (HMAC).
  * LOGGED_OUT_KEY mencegah sesi dipulihkan dari cookie setelah logout.
+ * Login lewat halaman /login (LoginPageFilter) hanya menulis cookie; sesi Vaadin
+ * dipulihkan dari cookie itu pada request berikutnya.
  */
 public final class AuthSession {
     public static final String COOKIE_NAME = "cashflow_uid";
@@ -39,6 +41,8 @@ public final class AuthSession {
         }
     }
 
+    // ---------- API publik ----------
+
     public static void login(User user) {
         VaadinSession vaadin = VaadinSession.getCurrent();
         vaadin.setAttribute(LOGGED_OUT_KEY, null);
@@ -47,7 +51,7 @@ public final class AuthSession {
         if (http != null) {
             http.setAttribute(USER_ID_KEY, user.getId());
         }
-        writeCookie(sign(user.getId()), COOKIE_MAX_AGE);
+        writeCookie(createCookie(user.getId()));
     }
 
     public static Optional<User> currentUser(IUserRepository users) {
@@ -80,10 +84,32 @@ public final class AuthSession {
             clear(vaadin);
             vaadin.setAttribute(LOGGED_OUT_KEY, Boolean.TRUE);
         }
-        writeCookie("", 0);
+        Cookie expired = newCookie("", 0);
+        writeCookie(expired);
+    }
+
+    /** Cookie login bertanda tangan; dipakai juga oleh LoginPageFilter. */
+    public static Cookie createCookie(int userId) {
+        return newCookie(sign(userId), COOKIE_MAX_AGE);
     }
 
     // ---------- internal ----------
+
+    private static Cookie newCookie(String value, int maxAge) {
+        Cookie cookie = new Cookie(COOKIE_NAME, value);
+        cookie.setPath("/");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(maxAge);
+        cookie.setAttribute("SameSite", "Lax");
+        return cookie;
+    }
+
+    private static void writeCookie(Cookie cookie) {
+        VaadinResponse response = VaadinService.getCurrentResponse();
+        if (response != null) {
+            response.addCookie(cookie);
+        }
+    }
 
     private static void clear(VaadinSession vaadin) {
         vaadin.setAttribute(USER_ID_KEY, null);
@@ -94,18 +120,6 @@ public final class AuthSession {
 
     private static Integer asInt(Object value) {
         return value instanceof Integer i ? i : null;
-    }
-
-    private static void writeCookie(String value, int maxAge) {
-        VaadinResponse response = VaadinService.getCurrentResponse();
-        if (response == null) {
-            return;
-        }
-        Cookie cookie = new Cookie(COOKIE_NAME, value);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
     }
 
     private static Integer idFromCookie() {
