@@ -79,21 +79,27 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
     /**
      * Memasang ID pada elemen <input> di dalam field Vaadin (bukan pada pembungkusnya),
      * lalu mengarahkan atribut "for" pada <label> ke ID tersebut.
+     * Memakai MutationObserver: ID dipasang begitu <input> muncul di DOM, tanpa menebak jeda waktu.
      */
     private static void setInputId(Component field, String id) {
         field.addAttachListener(e -> field.getElement().executeJs(
                 """
-                let tries = 0;
+                const host = this;
                 const apply = () => {
-                    const input = this.inputElement || this.querySelector('input');
+                    const input = host.inputElement || host.querySelector('input');
                     if (!input) return false;
-                    input.id = $0;
-                    const label = this.querySelector('label');
+                    if (input.id !== $0) input.id = $0;
+                    const label = host.querySelector('label');
                     if (label) label.setAttribute('for', $0);
                     return true;
                 };
-                const tick = () => { if (!apply() && tries++ < 20) setTimeout(tick, 50); };
-                tick();
+                if (!apply()) {
+                    const observer = new MutationObserver(() => {
+                        if (apply()) observer.disconnect();
+                    });
+                    observer.observe(host, { childList: true, subtree: true });
+                    setTimeout(() => observer.disconnect(), 15000);
+                }
                 """, id));
     }
 
