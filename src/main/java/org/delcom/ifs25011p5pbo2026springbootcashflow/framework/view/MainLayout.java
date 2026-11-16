@@ -1,11 +1,13 @@
 package org.delcom.ifs25011p5pbo2026springbootcashflow.framework.view;
 
+import com.vaadin.flow.component.HasElement;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -20,14 +22,26 @@ import org.delcom.ifs25011p5pbo2026springbootcashflow.framework.auth.AuthSession
 
 import java.util.Optional;
 
-/** Layout utama: sidebar, menu avatar (Profil / Keluar), dan guard login global. */
+/** Layout utama: header (banner), sidebar, area isi (main), menu avatar, dan guard login global. */
 public class MainLayout extends AppLayout implements BeforeEnterObserver {
     private final IUserRepository users;
+    private final Main main = new Main();
     private Integer builtForUserId;
 
     public MainLayout(IUserRepository users) {
         this.users = users;
         setPrimarySection(Section.DRAWER);
+        main.getStyle().set("display", "block").set("height", "100%");
+        setContent(main); // isi halaman berada di dalam landmark <main>
+    }
+
+    /** Isi halaman dimasukkan ke <main>, bukan langsung ke AppLayout. */
+    @Override
+    public void showRouterLayoutContent(HasElement content) {
+        main.getElement().removeAllChildren();
+        if (content != null) {
+            main.getElement().appendChild(content.getElement());
+        }
     }
 
     @Override
@@ -48,7 +62,7 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
     }
 
     private void build(User user) {
-        H1 title = new H1("Cashflow");
+        Span title = new Span("Cashflow"); // bukan heading: <h1> milik judul halaman
         title.addClassName("app-title");
 
         Span name = new Span(user.getFullName());
@@ -78,7 +92,10 @@ public class MainLayout extends AppLayout implements BeforeEnterObserver {
         HorizontalLayout navbar = new HorizontalLayout(new DrawerToggle(), title, right);
         navbar.setWidthFull();
         navbar.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
-        addToNavbar(navbar);
+
+        Header banner = new Header(navbar); // landmark banner untuk seluruh isi navbar
+        banner.getStyle().set("width", "100%");
+        addToNavbar(banner);
 
         SideNav nav = new SideNav();
         nav.addItem(new SideNavItem("Catatan Keuangan", FinanceView.class, VaadinIcon.WALLET.create()));

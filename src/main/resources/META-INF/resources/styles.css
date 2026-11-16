@@ -114,3 +114,13 @@ vaadin-tab[disabled] {
 .card-expense { border-left: 4px solid #DC2626; }
 .card-balance { border-left: 4px solid #2563EB; }
 .card-total   { border-left: 4px solid #6B7280; }
+
+/* Judul halaman (h1 di dalam PageCard) dan nama aplikasi di navbar */
+.page-card > h1 {
+    margin: 0;
+    font-size: var(--lumo-font-size-xl);
+}
+
+.app-title {
+    font-weight: 600;
+}
